@@ -58,6 +58,7 @@ public class YmlExtractor {
         // we retrieve parameters
         String filename = "data";
         String output = "conf/";
+        String classpath = "";
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("--")) {
                 if (args[i].startsWith("--filename=")) {
@@ -65,6 +66,9 @@ public class YmlExtractor {
                 }
                 if (args[i].startsWith("--output=")) {
                     output = args[i].substring(9);
+                }
+                if (args[i].startsWith("--model.classpath=")) {
+                	classpath = args[i].substring(18);
                 }
             }
         }
@@ -74,12 +78,12 @@ public class YmlExtractor {
         Play.init(root, System.getProperty("play.id", ""));
         Thread.currentThread().setContextClassLoader(Play.classloader);
         Class c = Play.classloader.loadClass("play.modules.yml.YmlExtractor");
-        Method m = c.getMethod("mainWork", String.class, String.class);
-        m.invoke(c.newInstance(), filename, output);
+        Method m = c.getMethod("mainWork", String.class, String.class, String.class);
+        m.invoke(c.newInstance(), filename, output, classpath);
         System.exit(0);
     }
 
-    public static void mainWork(String filename, String output) throws Exception {
+    public static void mainWork(String filename, String output, String classpath) throws Exception {
         // starting play DB plugin
         new DBPlugin().onApplicationStart();
         new JPAPlugin().onApplicationStart();
@@ -87,7 +91,18 @@ public class YmlExtractor {
 
         // we search all entities classes
         List<Class> entities = Play.classloader.getAnnotatedClasses(Entity.class);
+    	Logger.info("classpath %s", classpath);
         for (Class entity : entities) {
+        	if (entity == null) {
+        		Logger.info("entity is null..");
+        	} else if (entity.getPackage() == null) {
+            	Logger.info("%s package is null..", entity.getName());
+        	} else {
+            	Logger.info("%s %s", entity.getName(), entity.getPackage().getName());
+            	if (classpath != null && !classpath.isEmpty() && !entity.getPackage().getName().startsWith(classpath)) {
+            		continue;
+            	}
+        	}
             // we search all object for the specified class
             List<JPABase> objects = (List<JPABase>) JPA.em()
                     .createQuery("SELECT E FROM " + entity.getSimpleName() + " E").getResultList();
