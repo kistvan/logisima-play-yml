@@ -26,6 +26,8 @@ import java.util.Map;
 
 import javax.persistence.Entity;
 
+import org.junit.Ignore;
+
 import play.Logger;
 import play.Play;
 import play.db.DBPlugin;
@@ -93,6 +95,7 @@ public class YmlExtractor {
         List<Class> entities = Play.classloader.getAnnotatedClasses(Entity.class);
     	Logger.info("classpath %s", classpath);
         for (Class entity : entities) {
+        	Ignore ig = (Ignore)entity.getAnnotation(Ignore.class);
         	if (entity == null) {
         		Logger.info("entity is null..");
         	} else if (entity.getPackage() == null) {
@@ -103,7 +106,11 @@ public class YmlExtractor {
             		continue;
             	}
         	}
-            // we search all object for the specified class
+        	if (ig != null) {
+        		Logger.info("@Igoreが設定されています %s", entity.getName());
+        		continue;
+        	}
+        	// we search all object for the specified class
             List<JPABase> objects = (List<JPABase>) JPA.em()
                     .createQuery("SELECT E FROM " + entity.getSimpleName() + " E order by id").getResultList();
 
