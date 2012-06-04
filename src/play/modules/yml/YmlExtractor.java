@@ -20,6 +20,7 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,8 +45,7 @@ public class YmlExtractor {
     /**
      * HashMap of all database object.
      */
-    public static Map<String, YmlObject> ymlObjects = (Map<String, YmlObject>) Collections
-                                                            .synchronizedMap(new HashMap<String, YmlObject>());
+    public static Map<String, YmlObject> ymlObjects = new LinkedHashMap<String, YmlObject>();
 
     /**
      * Main method !
@@ -105,7 +105,7 @@ public class YmlExtractor {
         	}
             // we search all object for the specified class
             List<JPABase> objects = (List<JPABase>) JPA.em()
-                    .createQuery("SELECT E FROM " + entity.getSimpleName() + " E").getResultList();
+                    .createQuery("SELECT E FROM " + entity.getSimpleName() + " E order by id").getResultList();
 
             for (JPABase jpaBase : objects) {
                 YmlObject ymlObject = YmlExtractorUtil.object2YmlObject(jpaBase);
